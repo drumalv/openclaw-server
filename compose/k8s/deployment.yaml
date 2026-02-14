@@ -19,14 +19,19 @@ spec:
         - name: openclaw
           image: openclaw:latest
           imagePullPolicy: IfNotPresent   # local image, no pull from registry
+          env:
+            - name: GATEWAY_MODE
+              value: "local"
           ports:
             - containerPort: 18789
               name: http
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000        # uid del usuario 'node' en la imagen
+            allowPrivilegeEscalation: false
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
-            - name: workspace
-              mountPath: /home/node/openclaw/workspace
           resources:
             requests:
               cpu: "250m"
@@ -38,6 +43,3 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: openclaw-config-pvc
-        - name: workspace
-          persistentVolumeClaim:
-            claimName: openclaw-workspace-pvc
