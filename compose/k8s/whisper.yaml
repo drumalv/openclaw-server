@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: whisper
-          image: fedirz/faster-whisper-server:latest
+          image: fedirz/faster-whisper-server:latest-cpu
           env:
             # Modelo: tiny/base/small/medium/large-v3
             # tiny  → ~1GB RAM, rápido, calidad básica
