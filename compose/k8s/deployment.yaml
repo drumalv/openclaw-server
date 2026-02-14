@@ -19,7 +19,7 @@ spec:
         - name: openclaw
           image: openclaw:latest
           imagePullPolicy: IfNotPresent   # local image, no pull from registry
-          command: ["openclaw", "run", "--allow-unconfigured"]
+          command: ["sleep", "infinity"]
           env:
             - name: GATEWAY_MODE
               value: "local"
