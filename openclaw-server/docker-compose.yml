@@ -1,0 +1,31 @@
+services:
+  openclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openclaw
+    restart: unless-stopped
+
+    # Variables de entorno para configuración
+    environment:
+      # Token de Telegram (obtenido de @BotFather)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      # API Key de Google Gemini (para usar cuenta Google Pro)
+      # Obtener en: https://aistudio.google.com/app/apikey
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Modo del gateway (opcional, ayuda a evitar errores de config faltante en algunos casos)
+      - GATEWAY_MODE=local
+
+    # Persistencia (configuración, memoria y espacio de trabajo)
+    # Ahora usando bind mounts locales como solicitaste
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/openclaw/workspace
+
+    # Puerto para el dashboard web
+    ports:
+      - "18789:18789"
+
+    # Habilitar TTY para poder interactuar si es necesario
+    tty: true
+    stdin_open: true

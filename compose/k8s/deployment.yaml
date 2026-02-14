@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: openclaw
+  labels:
+    app: openclaw
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openclaw
+  template:
+    metadata:
+      labels:
+        app: openclaw
+    spec:
+      containers:
+        - name: openclaw
+          image: openclaw:latest
+          imagePullPolicy: IfNotPresent   # local image, no pull from registry
+          ports:
+            - containerPort: 18789
+              name: http
+          volumeMounts:
+            - name: config
+              mountPath: /home/node/.openclaw
+            - name: workspace
+              mountPath: /home/node/openclaw/workspace
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: openclaw-config-pvc
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: openclaw-workspace-pvc

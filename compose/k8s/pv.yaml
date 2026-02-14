@@ -1,0 +1,57 @@
+# --- PersistentVolume + PersistentVolumeClaim para CONFIG ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: openclaw-config-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /opt/openclaw/config
+    type: DirectoryOrCreate
+  storageClassName: manual
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openclaw-config-pvc
+  namespace: openclaw
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual
+---
+# --- PersistentVolume + PersistentVolumeClaim para WORKSPACE ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: openclaw-workspace-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /opt/openclaw/workspace
+    type: DirectoryOrCreate
+  storageClassName: manual
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openclaw-workspace-pvc
+  namespace: openclaw
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: manual
