@@ -6,9 +6,8 @@ Wants=k3s.service tailscaled.service
 [Service]
 Type=simple
 User=root
-# Ejecutar port-forward en la IP de Tailscale
-ExecStart=/usr/local/bin/k3s kubectl port-forward svc/openclaw 18789:18789 \
-  -n openclaw --address=$(tailscale ip -4)
+# Usar script wrapper para obtener IP de Tailscale dinámicamente
+ExecStart=/opt/openclaw/portforward-wrapper.sh
 Restart=always
 RestartSec=10
 

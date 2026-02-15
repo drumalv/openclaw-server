@@ -32,6 +32,15 @@ if ! command -v k3s &> /dev/null; then
     exit 1
 fi
 
+# Crear directorio para el script wrapper
+echo "  → Creando directorio /opt/openclaw"
+mkdir -p /opt/openclaw
+
+# Copiar el script wrapper
+echo "  → Instalando script wrapper en /opt/openclaw/portforward-wrapper.sh"
+cp "$SCRIPT_DIR/portforward-wrapper.sh" /opt/openclaw/portforward-wrapper.sh
+chmod +x /opt/openclaw/portforward-wrapper.sh
+
 # Copiar el archivo de servicio
 echo "  → Copiando servicio a $SERVICE_PATH"
 cp "$SCRIPT_DIR/$SERVICE_FILE" "$SERVICE_PATH"
