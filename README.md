@@ -4,6 +4,8 @@
 
 Server de despliegue para [OpenClaw](https://github.com/nichochar/openclaw) — un agente de IA accesible vía Telegram y dashboard web, desplegado de forma segura en Kubernetes (K3s).
 
+La parte de seguridad se deben los créditos a https://github.com/edunavajas
+
 ## Arquitectura
 
 ```mermaid
