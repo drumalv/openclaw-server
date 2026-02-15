@@ -3,6 +3,7 @@ FROM node:22-bookworm-slim
 # Paquetes mínimos: git (para npm deps vía git), certificados, tini (PID 1)
 RUN apt-get update && apt-get install -y --no-install-recommends \
   git ca-certificates tini \
+  python3 python3-pip python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
 # Instala OpenClaw global (método recomendado en docs: npm install -g openclaw@latest)
