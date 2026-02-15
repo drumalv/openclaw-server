@@ -195,6 +195,28 @@ sudo kubectl exec deployment/openclaw -n openclaw -- openclaw devices list
 sudo kubectl exec deployment/openclaw -n openclaw -- openclaw devices approve <ID>
 ```
 
+#### Port-forward permanente (recomendado)
+
+En lugar de ejecutar `kubectl port-forward` manualmente cada vez, puedes instalar un servicio systemd que lo mantenga activo automáticamente:
+
+```bash
+# Instalar servicio de port-forward permanente
+sudo bash compose/k8s/setup-portforward.sh
+```
+
+Esto creará un servicio systemd que:
+- Inicia automáticamente al arrancar el servidor
+- Se reinicia automáticamente si falla
+- Mantiene el dashboard accesible en `http://<TAILSCALE-IP>:18789`
+
+```bash
+# Ver estado del servicio
+sudo systemctl status openclaw-portforward
+
+# Ver logs en tiempo real
+sudo journalctl -u openclaw-portforward -f
+```
+
 ### 10. Auto-actualización diaria
 
 ```bash

@@ -68,8 +68,8 @@ echo "  • Fail2Ban (protección contra fuerza bruta)"
 echo "  • Tailscale VPN (acceso privado)"
 echo "  • Auto-updates (actualización diaria)"
 echo ""
-read -p "¿Continuar? (sí/no): " -r
-if [[ ! $REPLY =~ ^[Ss]([Íí])?$ ]]; then
+read -p "Continue? (yes/no): " -r
+if [[ ! $REPLY =~ ^[Yy]([Ee][Ss])?$ ]]; then
     echo -e "${RED}Abortado por el usuario${NC}"
     exit 1
 fi

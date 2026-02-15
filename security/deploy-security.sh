@@ -10,6 +10,7 @@ set -euo pipefail
 #  3. Fail2Ban
 #  4. SSH Hardening (último por ser el más crítico)
 #  5. Auto-Update (cron diario)
+#  6. Port-Forward Permanente (opcional)
 #
 #  Uso:
 #    sudo bash security/deploy-security.sh
@@ -37,8 +38,8 @@ confirm() {
     local message="$1"
     echo ""
     echo -e "${YELLOW}⚠️  $message${NC}"
-    read -p "¿Continuar? (sí/no): " -r
-    if [[ ! $REPLY =~ ^[Ss]([Íí])?$ ]]; then
+    read -p "Continue? (yes/no): " -r
+    if [[ ! $REPLY =~ ^[Yy]([Ee][Ss])?$ ]]; then
         echo -e "${RED}Abortado por el usuario${NC}"
         exit 1
     fi
@@ -82,7 +83,7 @@ if [[ "$SSH_KEY_FOUND" = false ]]; then
     echo "Configura tu clave primero con:"
     echo "  ssh-copy-id usuario@servidor"
     echo ""
-    confirm "¿Estás SEGURO de que quieres continuar sin clave SSH?"
+    confirm "Are you SURE you want to continue without SSH key?"
 fi
 
 echo ""
@@ -205,6 +206,22 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🌐 Paso 6/6: Port-Forward Permanente (Opcional)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+if systemctl is-active --quiet openclaw-portforward; then
+    echo -e "${GREEN}✓ Servicio de port-forward ya está activo${NC}"
+else
+    echo "Este servicio mantiene el dashboard accesible automáticamente"
+    echo "en http://$(tailscale ip -4 2>/dev/null || echo '<TAILSCALE-IP>'):18789"
+    echo ""
+    confirm "Instalar servicio de port-forward permanente (recomendado)"
+    bash "$SECURITY_DIR/../compose/k8s/setup-portforward.sh" || echo "⚠️  Port-forward manual: kubectl port-forward svc/openclaw 18789:18789 -n openclaw --address=\$(tailscale ip -4)"
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo -e "${GREEN}✅ HARDENING COMPLETADO${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
@@ -252,14 +269,24 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📖 Próximos pasos:"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "1. Acceder al dashboard de OpenClaw vía Tailscale:"
+echo "1. Instalar Tailscale en tu PC/móvil:"
+echo "   https://tailscale.com/download"
 echo ""
-echo "   sudo kubectl port-forward svc/openclaw 18789:18789 \\"
-echo "     -n openclaw --address=\$(tailscale ip -4)"
+echo "2. Acceder al dashboard de OpenClaw:"
 echo ""
-echo "   Luego abre: http://\$(tailscale ip -4):18789"
+if systemctl is-active --quiet openclaw-portforward 2>/dev/null; then
+    echo "   El dashboard ya está accesible en:"
+    echo "   http://\$(tailscale ip -4):18789"
+else
+    echo "   Opción A (recomendada): Port-forward permanente"
+    echo "   sudo bash compose/k8s/setup-portforward.sh"
+    echo ""
+    echo "   Opción B: Port-forward manual"
+    echo "   sudo kubectl port-forward svc/openclaw 18789:18789 \\"
+    echo "     -n openclaw --address=\$(tailscale ip -4)"
+fi
 echo ""
-echo "2. Si necesitas generar un token de acceso:"
+echo "3. Si necesitas generar un token de acceso:"
 echo ""
 echo "   sudo kubectl exec deployment/openclaw -n openclaw -- openclaw auth token"
 echo ""

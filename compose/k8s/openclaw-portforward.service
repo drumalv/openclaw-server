@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenClaw Dashboard Port-Forward via Tailscale
+After=network.target k3s.service tailscaled.service
+Wants=k3s.service tailscaled.service
+
+[Service]
+Type=simple
+User=root
+# Ejecutar port-forward en la IP de Tailscale
+ExecStart=/usr/local/bin/k3s kubectl port-forward svc/openclaw 18789:18789 \
+  -n openclaw --address=$(tailscale ip -4)
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
