@@ -57,16 +57,17 @@ echo "🌐 Configurando Tailscale Serve..."
 echo "   Esto creará un proxy HTTPS desde $TAILSCALE_DOMAIN a localhost:18789"
 echo ""
 
-# Primero crear un port-forward local en localhost (en background)
-echo "  → Creando port-forward local a localhost:18789..."
-kubectl port-forward svc/openclaw 18789:18789 -n openclaw --address=127.0.0.1 &>/dev/null &
-PORT_FORWARD_PID=$!
-sleep 2
-
-# Verificar que el port-forward está activo
+# Primero asegurar que el port-forward local esté activo
+echo "  → Verificando port-forward local en localhost:18789..."
 if ! lsof -i :18789 &> /dev/null; then
-    echo "❌ Error: No se pudo crear port-forward en localhost:18789"
-    exit 1
+    echo "  → Creando port-forward local..."
+    kubectl port-forward svc/openclaw 18789:18789 -n openclaw --address=127.0.0.1 &>/dev/null &
+    sleep 3
+    
+    if ! lsof -i :18789 &> /dev/null; then
+        echo "❌ Error: No se pudo crear port-forward en localhost:18789"
+        exit 1
+    fi
 fi
 
 echo -e "${GREEN}✓ Port-forward activo${NC}"
@@ -74,7 +75,7 @@ echo ""
 
 # Configurar Tailscale Serve
 echo "  → Configurando Tailscale Serve en puerto 443 (HTTPS)..."
-tailscale serve https / http://localhost:18789
+tailscale serve --bg --https 443 http://localhost:18789
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -92,8 +93,8 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "⚠️  IMPORTANTE:"
 echo ""
-echo "   El port-forward local (PID: $PORT_FORWARD_PID) está corriendo en background."
-echo "   Para que Tailscale Serve funcione, este proceso debe estar siempre activo."
+echo "   Tailscale Serve está corriendo en background automáticamente."
+echo "   El port-forward local debe estar siempre activo para que funcione."
 echo ""
 echo "   Se recomienda instalar el servicio systemd permanente:"
 echo "   sudo bash compose/k8s/setup-tailscale-serve-service.sh"
