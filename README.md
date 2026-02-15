@@ -217,6 +217,26 @@ sudo systemctl status openclaw-portforward
 sudo journalctl -u openclaw-portforward -f
 ```
 
+#### Port-forward con HTTPS (Tailscale Serve)
+
+Para evitar el mensaje "control ui requires HTTPS or localhost", usa Tailscale Serve que proporciona HTTPS automático:
+
+```bash
+# Configurar Tailscale Serve (HTTPS automático)
+sudo bash compose/k8s/setup-tailscale-serve.sh
+
+# Instalar servicio permanente
+sudo bash compose/k8s/setup-tailscale-serve-service.sh
+```
+
+Tu dashboard estará disponible en `https://<tu-servidor>.tail<hash>.ts.net` con certificado SSL válido.
+
+**Ventajas de Tailscale Serve:**
+- ✅ HTTPS automático (sin mensajes de error del navegador)
+- ✅ Certificados válidos gestionados por Tailscale
+- ✅ No requiere configuración de DNS
+- ✅ Acceso solo desde tu red Tailscale (privado)
+
 ### 10. Auto-actualización diaria
 
 ```bash

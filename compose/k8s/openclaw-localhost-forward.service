@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenClaw Dashboard via Tailscale Serve (HTTPS)
+After=network.target k3s.service tailscaled.service
+Wants=k3s.service tailscaled.service
+
+[Service]
+Type=simple
+User=root
+# Crear port-forward local para que Tailscale Serve pueda hacer proxy
+ExecStart=/usr/local/bin/k3s kubectl port-forward svc/openclaw 18789:18789 \
+  -n openclaw --address=127.0.0.1
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
