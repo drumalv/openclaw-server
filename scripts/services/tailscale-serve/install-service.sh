@@ -29,7 +29,7 @@ fi
 
 # Copiar el archivo de servicio
 echo "  → Copiando servicio a $SERVICE_PATH"
-cp "$SCRIPT_DIR/$SERVICE_FILE" "$SERVICE_PATH"
+cp "$SCRIPT_DIR/openclaw-localhost-forward.service" "$SERVICE_PATH"
 
 # Recargar systemd
 echo "  → Recargando systemd..."

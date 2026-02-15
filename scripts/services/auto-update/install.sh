@@ -21,11 +21,11 @@ LOG_PREFIX="[openclaw-update $(date '+%Y-%m-%d %H:%M:%S')]"
 echo "$LOG_PREFIX Iniciando actualización de OpenClaw..."
 
 # Ruta al Dockerfile (ajustar si es diferente)
-DOCKERFILE_DIR="$(cd "$(dirname "$0")/../openclaw-server" && pwd)"
+DOCKERFILE_DIR="$(cd "$(dirname "$0")/../../docker" && pwd)"
 
 if [ ! -f "$DOCKERFILE_DIR/Dockerfile" ]; then
-  # Buscar en compose/ como alternativa
-  DOCKERFILE_DIR="$(cd "$(dirname "$0")/../compose" && pwd)"
+  echo "❌ No se encontró Dockerfile en $DOCKERFILE_DIR"
+  exit 1
 fi
 
 # Paso 1: Reconstruir la imagen con --no-cache para obtener última versión

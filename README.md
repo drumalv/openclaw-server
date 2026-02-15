@@ -50,23 +50,33 @@ graph TB
 ```
 openclaw-server/
 ├── README.md
-├── openclaw-server/
-│   ├── Dockerfile              # Imagen base con OpenClaw
-│   └── docker-compose.yml      # Alternativa: despliegue con Docker Compose
-├── compose/
-│   ├── deploy.sh               # Script de despliegue en K3s
-│   └── k8s/
-│       ├── namespace.yaml      # Namespace: openclaw
-│       ├── pv.yaml             # PersistentVolumes
-│       ├── deployment.yaml     # Deployment con securityContext
-│       ├── service.yaml        # ClusterIP (NO expuesto públicamente)
-│       └── whisper.yaml        # Whisper: transcripción de audio
-└── security/
-    ├── setup-firewall.sh       # Configuración UFW
-    ├── harden-ssh.sh           # Hardening SSH
-    ├── setup-fail2ban.sh       # Fail2Ban contra fuerza bruta
-    ├── setup-tailscale.sh      # VPN para acceso seguro al dashboard
-    └── auto-update.sh          # Actualización diaria automática
+├── Makefile                    # Comandos comunes
+├── docker/                     # Imagen Docker de OpenClaw
+│   ├── Dockerfile
+│   └── docker-compose.yml
+├── k8s/                        # Manifiestos Kubernetes
+│   ├── namespace.yaml
+│   ├── pv.yaml
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── whisper.yaml
+└── scripts/
+    ├── deploy/                 # Scripts de deployment
+    │   └── deploy-k8s.sh
+    ├── security/               # Setup de seguridad del servidor
+    │   ├── deploy-all.sh
+    │   ├── setup-firewall.sh
+    │   ├── setup-ssh.sh
+    │   ├── setup-fail2ban.sh
+    │   └── setup-tailscale.sh
+    ├── services/               # Servicios systemd del host
+    │   ├── portforward/
+    │   ├── tailscale-serve/
+    │   └── auto-update/
+    └── remote/                 # Scripts para ejecutar desde tu PC
+        ├── deploy-security.sh
+        ├── deploy-tailscale-serve.sh
+        └── update-portforward.sh
 ```
 
 ## Requisitos
@@ -99,8 +109,12 @@ git clone <tu-repo> openclaw-server && cd openclaw-server
 ### 3. Construir e importar la imagen
 
 ```bash
-docker build -t openclaw:latest ./openclaw-server
+# Opción A: Manual
+docker build -t openclaw:latest ./docker
 docker save openclaw:latest | sudo k3s ctr images import -
+
+# Opción B: Con Makefile
+make build-image
 ```
 
 ### 4. Hardening del servidor (CRÍTICO)
@@ -108,14 +122,13 @@ docker save openclaw:latest | sudo k3s ctr images import -
 > ⚠️ **Ejecuta estos scripts ANTES del despliegue.** OpenClaw tiene acceso al sistema; asegurar el servidor es fundamental.
 
 ```bash
-# Firewall: solo SSH + Tailscale + K3s
-sudo bash security/setup-firewall.sh
+# Opción A: Todo en uno
+make setup-security
 
-# SSH: desactivar contraseñas, solo claves públicas
-sudo bash security/harden-ssh.sh
-
-# Fail2Ban: banear IPs tras 3 intentos fallidos
-sudo bash security/setup-fail2ban.sh
+# Opción B: Scripts individuales
+sudo bash scripts/security/setup-firewall.sh
+sudo bash scripts/security/setup-ssh.sh
+sudo bash scripts/security/setup-fail2ban.sh
 ```
 
 #### Verificar el hardening
@@ -134,7 +147,7 @@ sudo fail2ban-client status sshd
 ### 5. Instalar Tailscale (acceso VPN)
 
 ```bash
-sudo bash security/setup-tailscale.sh
+sudo bash scripts/security/setup-tailscale.sh
 ```
 
 Después:
@@ -145,7 +158,11 @@ Después:
 ### 6. Desplegar en Kubernetes
 
 ```bash
-sudo bash compose/deploy.sh
+# Opción A: Con Makefile
+make deploy
+
+# Opción B: Manual
+sudo bash scripts/deploy/deploy-k8s.sh
 ```
 
 ### 7. Configurar OpenClaw (primera vez)
@@ -200,8 +217,11 @@ sudo kubectl exec deployment/openclaw -n openclaw -- openclaw devices approve <I
 En lugar de ejecutar `kubectl port-forward` manualmente cada vez, puedes instalar un servicio systemd que lo mantenga activo automáticamente:
 
 ```bash
-# Instalar servicio de port-forward permanente
-sudo bash compose/k8s/setup-portforward.sh
+# Opción A: Con Makefile
+make install-portforward
+
+# Opción B: Manual
+sudo bash scripts/services/portforward/install.sh
 ```
 
 Esto creará un servicio systemd que:
@@ -217,19 +237,20 @@ sudo systemctl status openclaw-portforward
 sudo journalctl -u openclaw-portforward -f
 ```
 
-#### Port-forward con HTTPS (Tailscale Serve)
+#### Port-forward con HTTPS (Tailscale Serve) — Recomendado
 
 Para evitar el mensaje "control ui requires HTTPS or localhost", usa Tailscale Serve que proporciona HTTPS automático:
 
 ```bash
-# Configurar Tailscale Serve (HTTPS automático)
-sudo bash compose/k8s/setup-tailscale-serve.sh
+# Opción A: Con Makefile
+make install-tailscale-serve
 
-# Instalar servicio permanente
-sudo bash compose/k8s/setup-tailscale-serve-service.sh
+# Opción B: Manual
+sudo bash scripts/services/tailscale-serve/install.sh
+sudo bash scripts/services/tailscale-serve/install-service.sh
 ```
 
-Tu dashboard estará disponible en `https://<tu-servidor>.tail<hash>.ts.net` con certificado SSL válido.
+Tu dashboard estará disponible en `https://<tu-servidor>.tail<hash>.ts.net` con certificado SSL.
 
 **Ventajas de Tailscale Serve:**
 - ✅ HTTPS automático (sin mensajes de error del navegador)
@@ -237,11 +258,100 @@ Tu dashboard estará disponible en `https://<tu-servidor>.tail<hash>.ts.net` con
 - ✅ No requiere configuración de DNS
 - ✅ Acceso solo desde tu red Tailscale (privado)
 
+##### Confiar en el certificado SSL
+
+El navegador puede mostrar una advertencia de seguridad la primera vez. Tienes dos opciones:
+
+**Opción 1: Aceptar manualmente (más simple)**
+
+- **Chrome/Edge/Brave**: Click "Avanzado" → "Continuar al sitio (no seguro)"
+- **Firefox**: Click "Avanzado" → "Aceptar el riesgo y continuar"
+
+**Opción 2: Importar certificado permanentemente**
+
+<details>
+<summary>Linux</summary>
+
+```bash
+# Obtener el certificado de Tailscale
+ssh usuario@servidor "sudo tailscale cert <tu-servidor>.tail<hash>.ts.net"
+
+# Copiar a tu PC
+scp usuario@servidor:~/<tu-servidor>.tail<hash>.ts.net.crt ~/
+
+# Instalar en el sistema
+sudo cp ~/<tu-servidor>.tail<hash>.ts.net.crt /usr/local/share/ca-certificates/
+sudo update-ca-certificates
+
+# Reiniciar navegador
+```
+</details>
+
+<details>
+<summary>Windows</summary>
+
+```bash
+# Descargar certificado desde el servidor
+scp usuario@servidor:~/<tu-servidor>.tail<hash>.ts.net.crt C:\Users\TU_USUARIO\Downloads\
+```
+
+1. Abre el archivo `.crt` (doble clic)
+2. Click "**Instalar certificado...**"
+3. Selecciona "**Equipo local**" (Local Machine)
+4. Selecciona "**Colocar todos los certificados en el siguiente almacén**"
+5. Click "**Examinar**" → "**Entidades de certificación raíz de confianza**"
+6. Click "**Siguiente**" → "**Finalizar**"
+7. Reinicia el navegador
+</details>
+
+<details>
+<summary>macOS</summary>
+
+```bash
+# Descargar certificado
+scp usuario@servidor:~/<tu-servidor>.tail<hash>.ts.net.crt ~/Downloads/
+
+# Importar a Keychain
+sudo security add-trusted-cert -d -r trustRoot \
+  -k /Library/Keychains/System.keychain \
+  ~/Downloads/<tu-servidor>.tail<hash>.ts.net.crt
+
+# Reiniciar navegador
+```
+</details>
+
+##### Alternativa: Túnel SSH (sin certificados)
+
+Si prefieres no gestionar certificados, usa un túnel SSH para acceder como `localhost`:
+
+```bash
+# Desde tu PC
+ssh -i ~/.ssh/tu-clave -L 18789:127.0.0.1:18789 usuario@servidor -N
+```
+
+Luego accede a `http://localhost:18789` — el navegador no pedirá HTTPS.
+
+**Comandos útiles:**
+
+```bash
+# Ver configuración actual de Tailscale Serve
+sudo tailscale serve status
+
+# Resetear configuración
+sudo tailscale serve reset
+
+# Ver logs del servicio
+sudo journalctl -u openclaw-localhost-forward -f
+```
+
 ### 10. Auto-actualización diaria
 
 ```bash
-# Instalar como cron diario
-sudo cp security/auto-update.sh /etc/cron.daily/openclaw-update
+# Opción A: Con Makefile
+make install-auto-update
+
+# Opción B: Manual
+sudo cp scripts/services/auto-update/install.sh /etc/cron.daily/openclaw-update
 sudo chmod +x /etc/cron.daily/openclaw-update
 ```
 

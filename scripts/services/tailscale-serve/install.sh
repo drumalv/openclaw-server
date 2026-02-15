@@ -59,6 +59,13 @@ echo ""
 
 # Primero asegurar que el port-forward local esté activo
 echo "  → Verificando port-forward local en localhost:18789..."
+
+# Verificar e instalar lsof si es necesario
+if ! command -v lsof &> /dev/null; then
+    echo "  → Instalando lsof..."
+    apt-get update -qq && apt-get install -y lsof
+fi
+
 if ! lsof -i :18789 &> /dev/null; then
     echo "  → Creando port-forward local..."
     kubectl port-forward svc/openclaw 18789:18789 -n openclaw --address=127.0.0.1 &>/dev/null &
@@ -75,7 +82,7 @@ echo ""
 
 # Configurar Tailscale Serve
 echo "  → Configurando Tailscale Serve en puerto 443 (HTTPS)..."
-tailscale serve --bg --https 443 http://localhost:18789
+sudo tailscale serve --bg --https=443 http://127.0.0.1:18789
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -16,9 +16,10 @@ set -euo pipefail
 # ============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-K8S_DIR="$SCRIPT_DIR/k8s"
+K8S_DIR="$(cd "$SCRIPT_DIR/../../k8s" && pwd)"
 
 # ─── Verificación de requisitos ───────────────────────────────
+
 echo "🔍 Verificando requisitos..."
 
 check_cmd() {
@@ -39,7 +40,7 @@ echo "  ✓ docker encontrado"
 if ! docker image inspect openclaw:latest &>/dev/null; then
   echo "⚠️  Imagen 'openclaw:latest' no encontrada."
   echo "   Construyéndola automáticamente..."
-  DOCKERFILE_DIR="$SCRIPT_DIR/../openclaw-server"
+  DOCKERFILE_DIR="$(cd "$SCRIPT_DIR/../../docker" && pwd)"
   if [ -f "$DOCKERFILE_DIR/Dockerfile" ]; then
     docker build -t openclaw:latest "$DOCKERFILE_DIR"
     echo "  → Importando imagen en K3s..."

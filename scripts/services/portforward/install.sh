@@ -43,7 +43,7 @@ chmod +x /opt/openclaw/portforward-wrapper.sh
 
 # Copiar el archivo de servicio
 echo "  → Copiando servicio a $SERVICE_PATH"
-cp "$SCRIPT_DIR/$SERVICE_FILE" "$SERVICE_PATH"
+cp "$SCRIPT_DIR/openclaw-portforward.service" "$SERVICE_PATH"
 
 # Recargar systemd
 echo "  → Recargando systemd..."

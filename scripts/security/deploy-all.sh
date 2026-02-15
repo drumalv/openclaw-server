@@ -176,7 +176,7 @@ else
     echo "Si tuvieras un problema, puedes acceder vía Tailscale SSH como backup."
     echo ""
     confirm "He verificado que puedo conectar por SSH con mi clave y quiero continuar"
-    bash "$SECURITY_DIR/harden-ssh.sh"
+    bash "$SECURITY_DIR/setup-ssh.sh"
     
     echo ""
     echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -195,11 +195,12 @@ echo "🔄 Paso 5/5: Auto-Update Diario"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
+AUTO_UPDATE_SCRIPT="$SECURITY_DIR/../services/auto-update/install.sh"
 if [[ -x /etc/cron.daily/openclaw-update ]]; then
     echo -e "${GREEN}✓ Cron de auto-update ya está instalado${NC}"
 else
     confirm "Instalar tarea cron para actualización diaria de OpenClaw"
-    cp "$SECURITY_DIR/auto-update.sh" /etc/cron.daily/openclaw-update
+    cp "$AUTO_UPDATE_SCRIPT" /etc/cron.daily/openclaw-update
     chmod +x /etc/cron.daily/openclaw-update
     echo -e "${GREEN}✓ Auto-update instalado en /etc/cron.daily/openclaw-update${NC}"
 fi
@@ -217,7 +218,7 @@ else
     echo "en http://$(tailscale ip -4 2>/dev/null || echo '<TAILSCALE-IP>'):18789"
     echo ""
     confirm "Instalar servicio de port-forward permanente (recomendado)"
-    bash "$SECURITY_DIR/../compose/k8s/setup-portforward.sh" || echo "⚠️  Port-forward manual: kubectl port-forward svc/openclaw 18789:18789 -n openclaw --address=\$(tailscale ip -4)"
+    bash "$SECURITY_DIR/../services/portforward/install.sh" || echo "⚠️  Port-forward manual: kubectl port-forward svc/openclaw 18789:18789 -n openclaw --address=\$(tailscale ip -4)"
 fi
 
 echo ""
@@ -290,8 +291,5 @@ echo "3. Si necesitas generar un token de acceso:"
 echo ""
 echo "   sudo kubectl exec deployment/openclaw -n openclaw -- openclaw auth token"
 echo ""
-echo "3. Instala Tailscale en tu PC/móvil:"
-echo ""
-echo "   https://tailscale.com/download"
-echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+

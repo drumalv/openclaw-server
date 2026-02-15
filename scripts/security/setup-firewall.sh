@@ -30,9 +30,11 @@ echo "  → Permitiendo Tailscale (puerto 41641/UDP)"
 ufw allow 41641/udp comment 'Tailscale WireGuard'
 
 # Permitir K3s API server (solo si se necesita acceso remoto con kubectl)
-# Comenta esta línea si solo usas kubectl desde el propio servidor
-echo "  → Permitiendo K3s API (puerto 6443) — comenta si no necesitas kubectl remoto"
-ufw allow 6443/tcp comment 'K3s API Server'
+# IMPORTANTE: Solo descomentar si necesitas ejecutar kubectl desde otro equipo.
+# Para uso local en el servidor, NO es necesario abrir este puerto.
+# echo "  → Permitiendo K3s API (puerto 6443)"
+# ufw allow 6443/tcp comment 'K3s API Server'
+
 
 # NO se abre el puerto 30789 ni 18789 — el dashboard se accede SOLO vía Tailscale
 

@@ -9,20 +9,47 @@ set -euo pipefail
 #  2. Ejecuta el hardening en el servidor vía SSH
 #  3. Muestra el resultado
 #
+#  Variables de entorno requeridas:
+#    OPENCLAW_SERVER_IP   - IP del servidor remoto
+#    OPENCLAW_SSH_KEY     - Ruta a la clave SSH privada
+#
+#  Variables de entorno opcionales:
+#    OPENCLAW_SERVER_USER - Usuario SSH (default: ubuntu)
+#    OPENCLAW_REMOTE_DIR  - Directorio remoto (default: ~/openclaw-server)
+#
 #  Uso desde tu máquina local:
+#    export OPENCLAW_SERVER_IP="141.253.197.178"
+#    export OPENCLAW_SSH_KEY="$HOME/.ssh/id_rsa"
 #    bash security/deploy-security-remote.sh
 # ============================================================
 
-# Configuración del servidor
-SERVER_USER="ubuntu"
-SERVER_IP="141.253.197.178"
-SSH_KEY="$HOME/ssh_drumalv_server/ssh-key-2026-02-14.key"
-REMOTE_DIR="/home/ubuntu/openclaw-server"
+# Configuración del servidor (con valores por defecto)
+SERVER_USER="${OPENCLAW_SERVER_USER:-ubuntu}"
+SERVER_IP="${OPENCLAW_SERVER_IP:-}"
+SSH_KEY="${OPENCLAW_SSH_KEY:-}"
+REMOTE_DIR="${OPENCLAW_REMOTE_DIR:-/home/$SERVER_USER/openclaw-server}"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
+
+# Validar variables requeridas
+if [[ -z "$SERVER_IP" ]]; then
+    echo -e "${RED}❌ Error: OPENCLAW_SERVER_IP no está configurada${NC}"
+    echo ""
+    echo "Configura la variable de entorno con:"
+    echo "  export OPENCLAW_SERVER_IP=\"tu.servidor.ip\""
+    exit 1
+fi
+
+if [[ -z "$SSH_KEY" ]]; then
+    echo -e "${RED}❌ Error: OPENCLAW_SSH_KEY no está configurada${NC}"
+    echo ""
+    echo "Configura la variable de entorno con:"
+    echo "  export OPENCLAW_SSH_KEY=\"\$HOME/ruta/a/tu/clave.key\""
+    exit 1
+fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔒 OpenClaw Remote Security Hardening"
@@ -82,10 +109,10 @@ ssh -i "$SSH_KEY" "${SERVER_USER}@${SERVER_IP}" "mkdir -p ${REMOTE_DIR}/security
 
 # Copiar scripts de seguridad al servidor
 echo "  → Copiando scripts de seguridad..."
-scp -i "$SSH_KEY" security/*.sh "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/security/" 2>/dev/null
+scp -i "$SSH_KEY" scripts/security/*.sh "${SERVER_USER}@${SERVER_IP}:${REMOTE_DIR}/scripts/security/" 2>/dev/null
 
 # Dar permisos de ejecución
-ssh -i "$SSH_KEY" "${SERVER_USER}@${SERVER_IP}" "chmod +x ${REMOTE_DIR}/security/*.sh"
+ssh -i "$SSH_KEY" "${SERVER_USER}@${SERVER_IP}" "chmod +x ${REMOTE_DIR}/scripts/security/*.sh"
 
 echo -e "${GREEN}✓ Archivos sincronizados${NC}"
 echo ""
@@ -100,7 +127,7 @@ echo ""
 read -p "Presiona ENTER para conectar..."
 
 # Ejecutar el script de hardening en el servidor (sesión interactiva)
-ssh -i "$SSH_KEY" -t "${SERVER_USER}@${SERVER_IP}" "cd ${REMOTE_DIR} && sudo bash security/deploy-security.sh"
+ssh -i "$SSH_KEY" -t "${SERVER_USER}@${SERVER_IP}" "cd ${REMOTE_DIR} && sudo bash scripts/security/deploy-all.sh"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
