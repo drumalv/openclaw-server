@@ -1,8 +1,6 @@
 # OpenClaw Server
 
-<p align="center">
-  <img src="assets/readme_foto.png" alt="OpenClaw Preview" width="500">
-</p>
+![OpenClaw Preview](assets/readme_foto.png)
 
 Server de despliegue para [OpenClaw](https://github.com/nichochar/openclaw) — un agente de IA accesible vía Telegram y dashboard web, desplegado de forma segura en Kubernetes (K3s).
 
