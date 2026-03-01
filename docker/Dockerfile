@@ -20,6 +20,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   # Texto
   less tree \
+  # Media y Remotion
+  chromium ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 # Instala yq (YAML processor) desde GitHub
@@ -31,6 +33,11 @@ RUN npm install -g openclaw@latest
 
 # Dar permisos al usuario node para instalar skills globales y tener acceso al workspace
 RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin /home/node
+
+# Configuración de variables de entorno para Remotion/Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+  PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+  REMOTION_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Usuario no-root (ya existe en la imagen oficial node)
 USER node
