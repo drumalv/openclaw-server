@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git ca-certificates tini \
   # Python runtime
   python3 python3-pip python3-venv \
+  # Dependencias nativas (para canvas, etc.)
+  libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev build-essential \
   # Herramientas de red
   curl wget netcat-openbsd iputils-ping dnsutils \
   # Monitoreo y debugging
@@ -15,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   # Compresión
   unzip zip tar gzip bzip2 xz-utils \
   # Desarrollo
-  build-essential jq \
+  jq \
   # Texto
   less tree \
   && rm -rf /var/lib/apt/lists/*
@@ -27,12 +29,15 @@ RUN curl -fsSL https://github.com/mikefarah/yq/releases/latest/download/yq_linux
 # Instala OpenClaw global (método recomendado en docs: npm install -g openclaw@latest)
 RUN npm install -g openclaw@latest
 
-# Dar permisos al usuario node para instalar skills globales
-RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin
+# Dar permisos al usuario node para instalar skills globales y tener acceso al workspace
+RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin /home/node
 
 # Usuario no-root (ya existe en la imagen oficial node)
 USER node
 WORKDIR /home/node
+
+# Crear directorio "nutrition" en workspace para evitar error en el heartbeat del agente
+RUN mkdir -p /home/node/openclaw/workspace/nutrition
 
 # Persistencia típica (la harás con un volumen en docker-compose):
 # /home/node/.openclaw  (config/state)
